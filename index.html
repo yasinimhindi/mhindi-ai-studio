@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>Mhindi AI Studio</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b1020;
+      color: white;
+    }
+    header {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #283047;
+    }
+    .logo { font-size: 20px; font-weight: bold; }
+    .logo span { color: #a78bfa; }
+    select, textarea, input, button {
+      font: inherit;
+      border-radius: 10px;
+    }
+    select {
+      padding: 9px;
+      background: #202942;
+      color: white;
+      border: 1px solid #46516b;
+    }
+    main {
+      max-width: 720px;
+      margin: auto;
+      padding: 28px 18px;
+    }
+    .hero { text-align: center; padding: 25px 0; }
+    .hero h1 { font-size: 34px; margin-bottom: 12px; }
+    .hero h1 span { color: #a78bfa; }
+    .hero p { color: #bdc5d8; line-height: 1.6; }
+    .panel {
+      background: #151d32;
+      border: 1px solid #303b57;
+      border-radius: 18px;
+      padding: 20px;
+      margin-top: 18px;
+    }
+    .tabs { display: flex; gap: 10px; }
+    button {
+      border: 0;
+      padding: 13px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .tab {
+      flex: 1;
+      background: #26314c;
+      color: white;
+    }
+    .tab.active, .primary {
+      background: #7c3aed;
+      color: white;
+    }
+    label { display: block; margin: 18px 0 8px; }
+    textarea, input[type="file"] {
+      width: 100%;
+      padding: 13px;
+      background: #0b1020;
+      color: white;
+      border: 1px solid #46516b;
+    }
+    textarea { min-height: 125px; resize: vertical; }
+    .primary { width: 100%; margin-top: 16px; }
+    .note {
+      color: #aeb8ce;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    #message {
+      margin-top: 15px;
+      color: #c4b5fd;
+      overflow-wrap: anywhere;
+    }
+    footer {
+      text-align: center;
+      color: #aeb8ce;
+      padding: 25px 15px;
+      font-size: 13px;
+    }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Mhindi <span>AI Studio</span></div>
+    <select id="language" aria-label="Language">
+      <option value="sw">Kiswahili</option>
+      <option value="en">English</option>
+    </select>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1 id="heading">Badilisha Mawazo Kuwa <span>Video za AI</span></h1>
+      <p id="intro">Tengeneza wazo lako la video kwa maandishi au kwa kutumia picha.</p>
+    </section>
+
+    <section class="panel">
+      <div class="tabs">
+        <button class="tab active" id="textTab" type="button">Text to Video</button>
+        <button class="tab" id="imageTab" type="button">Image to Video</button>
+      </div>
+
+      <div id="textArea">
+        <label id="promptLabel" for="prompt">Eleza video unayotaka</label>
+        <textarea id="prompt" placeholder="Mfano: Simba akitembea msituni wakati wa machweo..."></textarea>
+      </div>
+
+      <div id="imageArea" hidden>
+        <label id="imageLabel" for="image">Chagua picha yako</label>
+        <input id="image" type="file" accept="image/*">
+        <p class="note" id="imageNote">Chagua picha kutoka kwenye simu yako.</p>
+        <img id="preview" alt="Image preview" hidden style="width:100%;max-height:300px;object-fit:contain;margin-top:12px;border-radius:12px">
+      </div>
+
+      <button class="primary" id="generate" type="button">Anza Kutengeneza Video</button>
+      <p id="message" role="status"></p>
+      <p class="note" id="notice">Hii ni toleo la mwanzo. Ili kuzalisha video halisi, tunahitaji kuunganisha huduma ya AI.</p>
+    </section>
+  </main>
+
+  <footer>© 2026 Mhindi AI Studio</footer>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let mode = "text";
+
+    const words = {
+      sw: {
+        heading: 'Badilisha Mawazo Kuwa <span>Video za AI</span>',
+        intro: 'Tengeneza wazo lako la video kwa maandishi au kwa kutumia picha.',
+        promptLabel: 'Eleza video unayotaka',
+        placeholder: 'Mfano: Simba akitembea msituni wakati wa machweo...',
+        imageLabel: 'Chagua picha yako',
+        imageNote: 'Chagua picha kutoka kwenye simu yako.',
+        generate: 'Anza Kutengeneza Video',
+        notice: 'Hii ni toleo la mwanzo. Ili kuzalisha video halisi, tunahitaji kuunganisha huduma ya AI.',
+        empty: 'Tafadhali andika maelezo ya video yako.',
+        noImage: 'Tafadhali chagua picha kwanza.',
+        waiting: 'Muonekano umeandaliwa, lakini huduma ya AI ya kutengeneza video bado haijaunganishwa.'
+      },
+      en: {
+        heading: 'Turn Ideas Into <span>AI Videos</span>',
+        intro: 'Create your video idea using text or an image.',
+        promptLabel: 'Describe the video you want',
+        placeholder: 'Example: A lion walking through a forest at sunset...',
+        imageLabel: 'Choose your image',
+        imageNote: 'Choose an image from your phone.',
+        generate: 'Start Generating Video',
+        notice: 'This is the first version. A video AI service must be connected to generate real videos.',
+        empty: 'Please describe your video first.',
+        noImage: 'Please choose an image first.',
+        waiting: 'The interface is ready, but an AI video generation service is not connected yet.'
+      }
+    };
+
+    function setMode(next) {
+      mode = next;
+      $('textArea').hidden = mode !== 'text';
+      $('imageArea').hidden = mode !== 'image';
+      $('textTab').classList.toggle('active', mode === 'text');
+      $('imageTab').classList.toggle('active', mode === 'image');
+      $('message').textContent = '';
+    }
+
+    $('textTab').addEventListener('click', () => setMode('text'));
+    $('imageTab').addEventListener('click', () => setMode('image'));
+
+    $('image').addEventListener('change', () => {
+      const file = $('image').files[0];
+      if (!file) {
+        $('preview').hidden = true;
+        return;
+      }
+      $('preview').src = URL.createObjectURL(file);
+      $('preview').hidden = false;
+    });
+
+    $('language').addEventListener('change', () => {
+      const w = words[$('language').value];
+      $('heading').innerHTML = w.heading;
+      $('intro').textContent = w.intro;
+      $('promptLabel').textContent = w.promptLabel;
+      $('prompt').placeholder = w.placeholder;
+      $('imageLabel').textContent = w.imageLabel;
+      $('imageNote').textContent = w.imageNote;
+      $('generate').textContent = w.generate;
+      $('notice').textContent = w.notice;
+    });
+
+    $('generate').addEventListener('click', () => {
+      const w = words[$('language').value];
+      if (mode === 'text' && !$('prompt').value.trim()) {
+        $('message').textContent = w.empty;
+        return;
+      }
+      if (mode === 'image' && !$('image').files.length) {
+        $('message').textContent = w.noImage;
+        return;
+      }
+      $('message').textContent = w.waiting;
+    });
+  </script>
+</body>
+</html>
+ 
